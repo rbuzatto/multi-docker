@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t rbuzatto/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker container run rbuzatto/react-test yarn test -- --coverage
+
+after_success:
+  - docker build -t rbuzatto/multi-client ./client
+  - docker build -t rbuzatto/multi-nginx ./nginx
+  - docker build -t rbuzatto/multi-server ./server
+  - docker build -t rbuzatto/multi-worker ./worker
+  # log in docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # push images do docker hub
+  - docker push rbuzatto/multi-client
+  - docker push rbuzatto/multi-nginx
+  - docker push rbuzatto/multi-server
+  - docker push rbuzatto/multi-worker
